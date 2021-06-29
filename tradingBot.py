@@ -19,7 +19,7 @@ retryInterval = 60
 orderQuantity = 25
 marketPrices = {}
 movingAvgs = {}
-contracts = [TSLA]
+contracts = [TSLA, AMD]
 
 
 # functions
@@ -34,6 +34,7 @@ def getMovingAverage(df, days):
 
 def calcMovingAvgs():
     global movingAvgs
+    global contracts
     for contract in contracts:
         historicalData = ib.reqHistoricalData(contract, endDateTime='', durationStr='200 D', barSizeSetting='1 day', whatToShow='MIDPOINT', useRTH=True)
         df = util.df(historicalData)
@@ -41,11 +42,12 @@ def calcMovingAvgs():
         sma50 = getMovingAverage(df, 50)
         sma200 = getMovingAverage(df, 200)
 
-        movingAvgs[contract.symbol] = {sma50, sma200}
+        movingAvgs[contract.symbol] = [sma50, sma200]
 
 
 def getMarketPrices():
     global marketPrices
+    global contracts
     for contract in contracts:
         ib.reqMktData(contract, '', False, False)
         ib.pendingTickersEvent += onDataReceived
@@ -54,12 +56,12 @@ def getMarketPrices():
 calcMovingAvgs()
 getMarketPrices()
 print(movingAvgs)
-print(marketPrices)
-time.sleep(5)
+# print(marketPrices)
+
 for contract in contracts:
-    print("market price for ", contract.symbol, ": asking $" + marketPrices[contract.symbol])
-    print("50 day moving average for ", contract.symbol, ": " + movingAvgs[contract.symbol][0])
-    print("200 day moving average for ", contract.symbol, ": " + movingAvgs[contract.symbol][1])
+    # print("market price for ", contract.symbol, ": asking $" + marketPrices[contract.symbol])
+    print("50 day moving average for ", contract.symbol, ": " + str(movingAvgs[contract.symbol][0]))
+    print("200 day moving average for ", contract.symbol, ": " + str(movingAvgs[contract.symbol][1]))
 
 # get market prices at current time.
 # check if market price is above 50sma and 200sma
