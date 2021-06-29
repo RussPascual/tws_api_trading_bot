@@ -61,7 +61,7 @@ for contract in contracts:
     print("50 day moving average for ", contract.symbol, ": " + movingAvgs[contract.symbol][0])
     print("200 day moving average for ", contract.symbol, ": " + movingAvgs[contract.symbol][1])
 
-# get market prices at current time
+# get market prices at current time.
 # check if market price is above 50sma and 200sma
 #   if yes then buy
 # check if market price is below 50sma and 200sma
