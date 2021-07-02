@@ -24,9 +24,13 @@ contracts = [TSLA, AMD]
 
 # functions
 def onDataReceived(ticker):
-    print("market data received for ", ticker.contract.symbol + ": asking $" + ticker.ask)
-    marketPrices[ticker.contract.symbol] = ticker.ask
-
+    print("in onDataReceived")
+    for t in ticker:
+        # print(t.contract.symbol, t.ask)
+        print("market data received for", t.contract.symbol, "with asking $:", t.ask)
+        marketPrices[t.contract.symbol] = t.ask
+        print(marketPrices[t.contract.symbol])
+# check if print in here works
 
 def getMovingAverage(df, days):
     return df[(200-days):200]["close"].mean()
@@ -53,15 +57,17 @@ def getMarketPrices():
         ib.pendingTickersEvent += onDataReceived
 
 
+# check if maybe getMarketPrices() just hasn't finished yet
 calcMovingAvgs()
 getMarketPrices()
+ib.sleep(2)
 print(movingAvgs)
-# print(marketPrices)
+print("market prices", marketPrices)
 
 for contract in contracts:
-    # print("market price for ", contract.symbol, ": asking $" + marketPrices[contract.symbol])
-    print("50 day moving average for ", contract.symbol, ": " + str(movingAvgs[contract.symbol][0]))
-    print("200 day moving average for ", contract.symbol, ": " + str(movingAvgs[contract.symbol][1]))
+    print("market price for", contract.symbol, ": asking $", marketPrices[contract.symbol])
+    print("50 day moving average for", contract.symbol, ":", str(movingAvgs[contract.symbol][0]))
+    print("200 day moving average for", contract.symbol, ":", str(movingAvgs[contract.symbol][1]))
 
 # get market prices at current time.
 # check if market price is above 50sma and 200sma
@@ -94,3 +100,5 @@ def placeEligibleOrders():
                 limitOrder.fillEvent += orderFilled
 
         time.sleep(retryInterval)
+
+ib.run()
