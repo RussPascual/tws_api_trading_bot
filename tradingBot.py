@@ -6,41 +6,66 @@ import time
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=1)
 
-
 # contracts to trade
-TSLA = Stock('TSLA', 'SMART', 'USD')
-AMZN = Stock('AMZN', 'SMART', 'USD')
-MSFT = Stock('MSFT', 'SMART', 'USD')
-AMD = Stock('AMD', 'SMART', 'USD')
-
+TSLA = Stock('TSLA', 'SMART', 'CAD')
+AMZN = Stock('AMZN', 'SMART', 'CAD')
+MSFT = Stock('MSFT', 'SMART', 'CAD')
+AMD = Stock('AMD', 'SMART', 'CAD')
 
 # setup
 retryInterval = 60
 orderQuantity = 25
 marketPrices = {}
 movingAvgs = {}
-contracts = [TSLA, AMD]
+contracts = [TSLA, AMD, MSFT, AMZN]
+for c in contracts:
+    ib.qualifyContracts(c)
 
 
 # functions
+def orderFilled(order, fill):
+    print("order has been filled")
+    print(order)
+    print(fill)
+
 def onDataReceived(ticker):
-    print("in onDataReceived")
     for t in ticker:
         # print(t.contract.symbol, t.ask)
-        print("market data received for", t.contract.symbol, "with asking $:", t.ask)
-        marketPrices[t.contract.symbol] = t.ask
-        print(marketPrices[t.contract.symbol])
+        print(t.contract.symbol, "asking: $", t.ask)
+        print(t.contract.symbol, ": 50sma =", movingAvgs[t.contract.symbol][0], ", 200sma =", movingAvgs[t.contract.symbol][1])
+        sma50 = movingAvgs[t.contract.symbol][0]
+        sma200 = movingAvgs[t.contract.symbol][1]
+
+        # check if should buy
+        if (t.ask > sma50 and t.ask > sma200):
+            print("Buying", t.contract.symbol)
+            order = LimitOrder('BUY', orderQuantity, t.ask)
+            limitOrder = ib.placeOrder(t.contract, order)
+            limitOrder.fillEvent += orderFilled
+
+        # check if should sell
+        elif (t.ask < sma50 and t.ask < sma200):
+            print("Selling", t.contract.symbol)
+            order = LimitOrder('SELL', orderQuantity, t.ask)
+            limitOrder = ib.placeOrder(t.contract, order)
+            limitOrder.fillEvent += orderFilled
+
+        else:
+            print("No action required")
+
+
 # check if print in here works
 
 def getMovingAverage(df, days):
-    return df[(200-days):200]["close"].mean()
+    return df[(200 - days):200]["close"].mean()
 
 
 def calcMovingAvgs():
     global movingAvgs
     global contracts
     for contract in contracts:
-        historicalData = ib.reqHistoricalData(contract, endDateTime='', durationStr='200 D', barSizeSetting='1 day', whatToShow='MIDPOINT', useRTH=True)
+        historicalData = ib.reqHistoricalData(contract, endDateTime='', durationStr='200 D', barSizeSetting='1 day',
+                                              whatToShow='MIDPOINT', useRTH=True)
         df = util.df(historicalData)
 
         sma50 = getMovingAverage(df, 50)
@@ -53,52 +78,13 @@ def getMarketPrices():
     global marketPrices
     global contracts
     for contract in contracts:
-        ib.reqMktData(contract, '', False, False)
+        ib.reqMktData(contract, '', True, False)
         ib.pendingTickersEvent += onDataReceived
 
 
-# check if maybe getMarketPrices() just hasn't finished yet
 calcMovingAvgs()
-getMarketPrices()
-ib.sleep(2)
-print(movingAvgs)
-print("market prices", marketPrices)
-
-for contract in contracts:
-    print("market price for", contract.symbol, ": asking $", marketPrices[contract.symbol])
-    print("50 day moving average for", contract.symbol, ":", str(movingAvgs[contract.symbol][0]))
-    print("200 day moving average for", contract.symbol, ":", str(movingAvgs[contract.symbol][1]))
-
-# get market prices at current time.
-# check if market price is above 50sma and 200sma
-#   if yes then buy
-# check if market price is below 50sma and 200sma
-#   if yes then sell
-
-def orderFilled(order, fill):
-    print("order has been filled")
-    print(order)
-    print(fill)
-
-def placeEligibleOrders():
-    while True:
-        getMarketPrices()
-
-        for contract in contracts:
-            marketPrice = marketPrices[contract.symbol]
-            sma50 = movingAvgs[contract.symbol][0]
-            sma200 = movingAvgs[contract.symbol][1]
-
-            if (marketPrice > sma50 and marketPrice > sma200):
-                order = LimitOrder('BUY', orderQuantity, marketPrice)
-                limitOrder = ib.placeOrder(contract, order)
-                limitOrder.fillEvent += orderFilled
-
-            if (marketPrice < sma50 and marketPrice < sma200):
-                order = LimitOrder('SELL', orderQuantity, marketPrice)
-                limitOrder = ib.placeOrder(contract, order)
-                limitOrder.fillEvent += orderFilled
-
-        time.sleep(retryInterval)
+while True:
+    getMarketPrices()
+    ib.sleep(retryInterval)
 
 ib.run()
