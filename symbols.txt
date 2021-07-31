@@ -1,0 +1,4 @@
+TSLA
+AMZN
+MSFT
+AMD

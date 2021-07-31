@@ -11,11 +11,19 @@ ib.connect('127.0.0.1', 7497, clientId=1)
 
 class AlgoTrader:
     def __init__(self):
-        self.contracts = [TSLA, AMZN, MSFT, AMD]
-        for c in self.contracts:
+        self.contracts = []
+        symbols = open('symbols.txt').readlines()
+
+        for s in symbols:
+            c = Stock(f'{s}', 'SMART', 'CAD')
             self.ib.qualifyContracts(c)
+            self.contracts.append(c)
+
+        # for c in self.contracts:
+        #     self.ib.qualifyContracts(c)
+
         self.buyQuantity = 25
-        self.sellQuanitity = 25
+        self.sellQuantity = 25
         self.marketPrices = {}
         self.movingAverages = {}
     
