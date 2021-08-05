@@ -1,11 +1,6 @@
 from ib_insync import *
 import pandas as pd
 
-TSLA = Stock('TSLA', 'SMART', 'CAD')
-AMZN = Stock('AMZN', 'SMART', 'CAD')
-MSFT = Stock('MSFT', 'SMART', 'CAD')
-AMD = Stock('AMD', 'SMART', 'CAD')
-
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=1)
 
@@ -15,12 +10,9 @@ class AlgoTrader:
         symbols = open('symbols.txt').readlines()
 
         for s in symbols:
-            c = Stock(f'{s}', 'SMART', 'CAD')
-            self.ib.qualifyContracts(c)
+            c = Stock(s.strip('\n'), 'SMART', 'USD')
+            ib.qualifyContracts(c)
             self.contracts.append(c)
-
-        # for c in self.contracts:
-        #     self.ib.qualifyContracts(c)
 
         self.buyQuantity = 25
         self.sellQuantity = 25
@@ -32,11 +24,13 @@ class AlgoTrader:
 
     def getMovingAvgs(self):
         for contract in self.contracts:
+            print(contract)
             historicalData = ib.reqHistoricalData(contract, endDateTime='', durationStr='200 D', barSizeSetting='1 day',
                                               whatToShow='MIDPOINT', useRTH=True)
+            print(historicalData)
             df = util.df(historicalData)
-            sma50 = ib.getMovingAverage(df, 50)
-            sma200 = ib.getMovingAverage(df, 200)
+            sma50 = self.calcMovingAvgs(df, 50)
+            sma200 = self.calcMovingAvgs(df, 200)
 
             ib.movingAvgs[contract.symbol] = [sma50, sma200]
     
@@ -66,7 +60,7 @@ class AlgoTrader:
             # sell if market price < 50sma and 200sma
             if self.movingAverages[contract.symbol][0] < self.marketPrices[contract.symbol] and self.movingAverages[contract.symbol][1] < self.marketPrices[contract.symbol]:
                 order = LimitOrder('SELL', self.orderQuantity, self.marketPrices[contract.symbol])
-                limitOrder = ib.placeOrder('SELL', self.buyQuantity, self.marketPrices[contract.symbol])
+                limitOrder = ib.placeOrder('SELL', self.sellQuantity, self.marketPrices[contract.symbol])
                 limitOrder.fillEvent += self.orderFilled
 
 
