@@ -1,9 +1,13 @@
-from AlgoTrader import AlgoTrader
-import time
+from AlgoTrader import *
 
 bot = AlgoTrader()
-print(bot.contracts)
 
 bot.getMovingAvgs()
-time.sleep(2)
-print(bot.movingAverages)
+bot.getMarketPrices()
+
+ib.sleep(2)
+
+print(bot.marketPrices)
+bot.tradeByMovingAverages()
+
+ib.run()

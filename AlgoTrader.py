@@ -18,49 +18,46 @@ class AlgoTrader:
         self.sellQuantity = 25
         self.marketPrices = {}
         self.movingAverages = {}
-    
+
     def calcMovingAvgs(self, df, days):
         return df[(200 - days):200]["close"].mean()
 
     def getMovingAvgs(self):
         for contract in self.contracts:
-            print(contract)
             historicalData = ib.reqHistoricalData(contract, endDateTime='', durationStr='200 D', barSizeSetting='1 day',
                                               whatToShow='MIDPOINT', useRTH=True)
-            print(historicalData)
             df = util.df(historicalData)
             sma50 = self.calcMovingAvgs(df, 50)
             sma200 = self.calcMovingAvgs(df, 200)
 
-            ib.movingAvgs[contract.symbol] = [sma50, sma200]
+            self.movingAverages[contract.symbol] = [sma50, sma200]
     
     def onDataReceived(self, ticker):
         for t in ticker:
             self.marketPrices[t.contract.symbol] = t.ask
+            # print(t.contract.symbol, ":", t.ask)
+            # print(self.marketPrices)
 
     def getMarketPrices(self):
         for contract in self.contracts:
             ib.reqMktData(contract, '', True, False)
             ib.pendingTickersEvent += self.onDataReceived
 
-    def orderFilled(self, order, fill):
-        print("order has been filled")
-        print(order)
-        print(fill)
-
     def tradeByMovingAverages(self):
         for contract in self.contracts:
+            print(contract.symbol + ":[" + str(self.movingAverages[contract.symbol][0]) + ", " + str(self.movingAverages[contract.symbol][1]), "], asking", self.marketPrices[contract.symbol])
 
             # buy if market price > 50sma and 200sma
-            if self.movingAverages[contract.symbol][0] > self.marketPrices[contract.symbol] and self.movingAverages[contract.symbol][1] > self.marketPrices[contract.symbol]:
-                order = LimitOrder('BUY', self.orderQuantity, self.marketPrices[contract.symbol])
-                limitOrder = ib.placeOrder('BUY', self.buyQuantity, self.marketPrices[contract.symbol])
-                limitOrder.fillEvent += self.orderFilled
+            if self.movingAverages[contract.symbol][0] < self.marketPrices[contract.symbol] and self.movingAverages[contract.symbol][1] < self.marketPrices[contract.symbol]:
+                order = LimitOrder('BUY', self.buyQuantity, self.marketPrices[contract.symbol])
+                limitOrder = ib.placeOrder(contract, order)
+                print("Buying", contract.symbol, "@", self.marketPrices[contract.symbol])
+
             
             # sell if market price < 50sma and 200sma
-            if self.movingAverages[contract.symbol][0] < self.marketPrices[contract.symbol] and self.movingAverages[contract.symbol][1] < self.marketPrices[contract.symbol]:
-                order = LimitOrder('SELL', self.orderQuantity, self.marketPrices[contract.symbol])
-                limitOrder = ib.placeOrder('SELL', self.sellQuantity, self.marketPrices[contract.symbol])
-                limitOrder.fillEvent += self.orderFilled
+            if self.movingAverages[contract.symbol][0] > self.marketPrices[contract.symbol] and self.movingAverages[contract.symbol][1] > self.marketPrices[contract.symbol]:
+                order = LimitOrder('SELL', self.sellQuantity, self.marketPrices[contract.symbol])
+                limitOrder = ib.placeOrder(contract, order)
+                print("Selling", contract.symbol, "@", self.marketPrices[contract.symbol])
 
 
