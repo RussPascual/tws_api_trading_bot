@@ -10,7 +10,7 @@ class AlgoTrader:
         symbols = open('symbols.txt').readlines()
 
         for s in symbols:
-            c = Stock(s.strip().strip('\n'), 'SMART', 'USD')
+            c = Stock(s.strip().strip('\n').strip(), 'SMART', 'USD')
             ib.qualifyContracts(c)
             self.contracts.append(c)
 
@@ -26,18 +26,12 @@ class AlgoTrader:
         symbols = open('symbols.txt').readlines()
 
         for s in symbols:
-            c = Stock(s.strip().strip('\n'), 'SMART', 'USD')
+            c = Stock(s.strip().strip('\n').strip(), 'SMART', 'USD')
             ib.qualifyContracts(c)
             self.contracts.append(c)
 
     def calcMovingAvgs(self, df, days):
         return df[(200 - days):200]["close"].mean()
-    
-    def test(self):
-        data = ib.reqHistoricalData(self.contracts[0], endDateTime='', durationStr='200 D', barSizeSetting='1 day',
-                                                  whatToShow='MIDPOINT', useRTH=True)
-        ib.sleep(2)
-        print(util.df(data))
 
     def getMovingAvgs(self):
         for contract in self.contracts:
