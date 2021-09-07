@@ -104,7 +104,7 @@ class Ui_MainWindow(object):
         self.buyQuantityLabel.setText(_translate("MainWindow", "Buy Quantity"))
         self.movingAveragesButton.setText(_translate("MainWindow", "Moving Averages"))
         self.volumeButton.setText(_translate("MainWindow", "Volume"))
-        self.growthButton.setText(_translate("MainWindow", "Growth"))
+        self.growthButton.setText(_translate("MainWindow", "Coming Soon"))
         self.methodLabel.setText(_translate("MainWindow", "Trade by..."))
 
     def loadStocksList(self):
