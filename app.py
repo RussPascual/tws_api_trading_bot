@@ -9,9 +9,9 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from AlgoTrader import *
+# from AlgoTrader import *
 
-bot = AlgoTrader()
+# bot = AlgoTrader()
 
 
 class Ui_MainWindow(object):
@@ -119,11 +119,11 @@ class Ui_MainWindow(object):
 
     def tradeByMovingAverages(self):
         self.saveStocksList()
-        bot.tradeByMovingAverages()
+        # bot.tradeByMovingAverages()
     
     def tradeByVolume(self):
         self.saveStocksList()
-        bot.tradeByVolume()
+        # bot.tradeByVolume()
 
     def tradeByGrowth(self):
         self.saveStocksList()
