@@ -10,7 +10,7 @@ class AlgoTrader:
         symbols = open('symbols.txt').readlines()
 
         for s in symbols:
-            c = Stock(s.strip('\n'), 'SMART', 'USD')
+            c = Stock(s.strip().strip('\n').strip(), 'SMART', 'USD')
             ib.qualifyContracts(c)
             self.contracts.append(c)
 
@@ -20,6 +20,15 @@ class AlgoTrader:
         self.movingAverages = {}
         self.onBalanceVolumes = {}
         self.closingPrices = {}
+
+    def updateContracts(self):
+        self.contracts = []
+        symbols = open('symbols.txt').readlines()
+
+        for s in symbols:
+            c = Stock(s.strip().strip('\n').strip(), 'SMART', 'USD')
+            ib.qualifyContracts(c)
+            self.contracts.append(c)
 
     def calcMovingAvgs(self, df, days):
         return df[(200 - days):200]["close"].mean()
@@ -47,6 +56,11 @@ class AlgoTrader:
             ib.pendingTickersEvent += self.onDataReceived
 
     def tradeByMovingAverages(self):
+        self.updateContracts()
+        self.getMarketPrices()
+        self.getMovingAvgs()
+        ib.sleep(3)
+
         for contract in self.contracts:
             print(contract.symbol + ":[" + str(self.movingAverages[contract.symbol][0]) + ", " + str(self.movingAverages[contract.symbol][1]), "], asking", self.marketPrices[contract.symbol])
 
@@ -92,6 +106,11 @@ class AlgoTrader:
 
 
     def tradeByVolume(self): # On-Balance Volume
+        self.updateContracts()
+        self.getMarketPrices()
+        self.getMovingAvgs()
+        ib.sleep(3)
+        
         for contract in self.contracts:
             obvs = self.onBalanceVolumes[contract.symbol]
             closingPrices = self.closingPrices[contract.symbol]
